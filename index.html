@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <!--
+  ================================================================
+    SINERGIA REA — Sistema de Control Contable
+    Archivo: index.html
+    Descripción: Estructura principal del panel administrativo.
+
+    ARCHIVOS DEL PROYECTO:
+      index.html  → Esta estructura HTML (esqueleto visual)
+      styles.css  → Todos los estilos y colores del sistema
+      app.js      → Toda la lógica, datos y comportamiento
+
+    DEPENDENCIAS EXTERNAS:
+      - Google Fonts: DM Serif Display + DM Sans
+      - SweetAlert2:  Modales y notificaciones
+
+    Para modificar colores → edita las variables en styles.css (:root)
+    Para agregar módulos  → agrega una .view en este HTML y su lógica en app.js
+  ================================================================
+  -->
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sinergia REA — Sistema de Control Contable</title>
+
+  <!-- Google Fonts: Outfit bold + DM Serif Display -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=DM+Serif+Display:ital@0;1&display=swap"
+    rel="stylesheet">
+
+  <!-- SweetAlert2: librería para modales y notificaciones -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- Howler.js: motor de audio para alertas diferenciadas -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+
+  <!-- Estilos del sistema -->
+  <link rel="stylesheet" href="styles.css">
+
+</head>
+<body>
+
+  <!-- ============================================================
+    OVERLAY MÓVIL
+    Fondo oscuro que aparece detrás del sidebar en mobile.
+    Al hacer clic, cierra el sidebar.
+  ============================================================ -->
+  <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+
+  <!-- ============================================================
+    SIDEBAR — Barra de navegación lateral izquierda
+    Contiene: logo, menú de navegación y pie de página.
+  ============================================================ -->
+  <aside class="sidebar" id="sidebar">
+
+    <!-- Logo / Marca -->
+    <div class="sidebar-brand">
+      <div class="brand-logo">Sinergia <span>REA</span></div>
+      <div class="brand-sub">Servicios Contables</div>
+      <div class="brand-badge">Sistema v1.0</div>
+    </div>
+
+    <!-- Navegación principal -->
+    <nav class="sidebar-nav">
+
+      <div class="nav-section">Principal</div>
+
+      <!-- Dashboard: vista general del sistema -->
+      <div class="nav-item active" onclick="navigate('dashboard')">
+        <span class="icon">📊</span> Dashboard
+      </div>
+
+      <div class="nav-section">Gestión</div>
+
+      <!-- Módulo Clientes -->
+      <div class="nav-item" onclick="navigate('clients')">
+        <span class="icon">👤</span> Clientes
+      </div>
+
+      <!-- Módulo Tareas Contables -->
+      <div class="nav-item" onclick="navigate('tasks')">
+        <span class="icon">📋</span> Tareas
+      </div>
+
+      <!-- Módulo Registro de Faltas -->
+      <div class="nav-item" onclick="navigate('absences')">
+        <span class="icon">❌</span> Faltas
+      </div>
+
+      <!-- Módulo Agenda de Citas -->
+      <div class="nav-item" onclick="navigate('appointments')">
+        <span class="icon">📅</span> Citas
+      </div>
+
+      <div class="nav-section">Reportes</div>
+
+      <!-- Módulo Reporte Mensual -->
+      <div class="nav-item" onclick="navigate('reports')">
+        <span class="icon">📈</span> Reporte Mensual
+      </div>
+
+    </nav>
+
+    <!-- Pie del sidebar -->
+    <div class="sidebar-footer">
+      &copy; 2026 Sinergia REA<br>
+      San Andrés Tuxtla, Ver.
+    </div>
+
+  </aside><!-- /sidebar -->
+
+
+  <!-- ============================================================
+    ÁREA PRINCIPAL
+    Todo el contenido que no es sidebar.
+    Contiene: topbar + vistas de cada módulo.
+  ============================================================ -->
+  <div class="main">
+
+    <!-- ──────────────────────────────────────────────────────────
+      TOPBAR — Barra superior fija
+      Contiene: botón hamburguesa (mobile), título de vista,
+                badge de alertas y botón de acción primaria.
+    ────────────────────────────────────────────────────────── -->
+    <header class="topbar">
+
+      <div style="display:flex;align-items:center;gap:12px;">
+        <!-- Botón hamburguesa: solo visible en mobile -->
+        <button class="menu-toggle" onclick="toggleSidebar()" title="Abrir menú">☰</button>
+
+        <!-- Título dinámico: cambia según la vista activa -->
+        <div class="topbar-title" id="topbar-title">Dashboard</div>
+      </div>
+
+      <div class="topbar-right">
+        <!-- Badge de alertas: muestra contador de alertas activas -->
+        <div class="alert-badge" onclick="showAlertsPanel()" title="Ver alertas activas">
+          🔔 <span id="alert-count">0</span>
+          <!-- Punto rojo: visible solo cuando hay alertas -->
+          <span class="badge-dot" id="alert-dot" style="display:none"></span>
+        </div>
+
+        <!-- Botón de acción principal: cambia según la vista activa -->
+        <button class="btn-primary" id="btn-add" onclick="handleAddClick()">
+          ＋ Nuevo
+        </button>
+      </div>
+
+    </header><!-- /topbar -->
+
+
+    <!-- ──────────────────────────────────────────────────────────
+      ÁREA DE CONTENIDO
+      Solo una vista es visible a la vez (la .view.active).
+      El JS controla cuál se muestra con navigate().
+    ────────────────────────────────────────────────────────── -->
+    <div class="content">
+
+
+      <!-- ========================================================
+        VISTA: DASHBOARD
+        Vista principal. Muestra KPIs, alertas y tareas recientes.
+        ID: view-dashboard
+      ======================================================== -->
+      <div class="view active" id="view-dashboard">
+
+        <!-- Grid de tarjetas KPI (métricas clave) -->
+        <!-- Los valores se llenan dinámicamente desde renderDashboard() en app.js -->
+        <div class="cards-grid">
+
+          <div class="kpi-card gold">
+            <div class="kpi-icon">📋</div>
+            <div class="kpi-value" id="kpi-pending">0</div>
+            <div class="kpi-label">Tareas pendientes</div>
+          </div>
+
+          <div class="kpi-card red">
+            <div class="kpi-icon">🚨</div>
+            <div class="kpi-value" id="kpi-overdue">0</div>
+            <div class="kpi-label">Tareas vencidas</div>
+          </div>
+
+          <div class="kpi-card orange">
+            <div class="kpi-icon">⚠️</div>
+            <div class="kpi-value" id="kpi-no-follow">0</div>
+            <div class="kpi-label">Sin seguimiento</div>
+          </div>
+
+          <div class="kpi-card blue">
+            <div class="kpi-icon">📅</div>
+            <div class="kpi-value" id="kpi-appts">0</div>
+            <div class="kpi-label">Citas hoy</div>
+          </div>
+
+          <div class="kpi-card green">
+            <div class="kpi-icon">👤</div>
+            <div class="kpi-value" id="kpi-clients">0</div>
+            <div class="kpi-label">Clientes activos</div>
+          </div>
+
+          <div class="kpi-card navy">
+            <div class="kpi-icon">❌</div>
+            <div class="kpi-value" id="kpi-absences">0</div>
+            <div class="kpi-label">Faltas del mes</div>
+          </div>
+
+        </div><!-- /cards-grid -->
+
+        <!-- Panel de alertas activas (se inyecta desde renderDashboard()) -->
+        <div id="alerts-panel-container"></div>
+
+        <!-- Encabezado de la sección de tareas recientes -->
+        <div class="section-header">
+          <div>
+            <div class="section-title">Tareas recientes</div>
+            <div class="section-subtitle">Últimas tareas registradas en el sistema</div>
+          </div>
+          <button class="btn-secondary" onclick="navigate('tasks')">Ver todas →</button>
+        </div>
+
+        <!-- Tabla de tareas recientes (se inyecta desde renderDashboard()) -->
+        <div class="table-wrap" id="dash-tasks-table">
+          <!-- renderDashboard() inyecta el contenido aquí -->
+        </div>
+
+      </div><!-- /view-dashboard -->
+
+
+      <!-- ========================================================
+        VISTA: CLIENTES
+        CRUD completo de clientes del despacho.
+        ID: view-clients
+      ======================================================== -->
+      <div class="view" id="view-clients">
+
+        <div class="section-header">
+          <div>
+            <div class="section-title">Clientes</div>
+            <div class="section-subtitle">Gestión de clientes del despacho contable</div>
+          </div>
+        </div>
+
+        <!-- Filtros: búsqueda por nombre y filtro por estado -->
+        <div class="filters-bar">
+          <input
+            class="search-input"
+            id="client-search"
+            placeholder="🔍 Buscar por nombre o razón social..."
+            oninput="renderClients()">
+          <select
+            class="filter-select"
+            id="client-status-filter"
+            onchange="renderClients()">
+            <option value="">Todos los estados</option>
+            <option value="active">Activos</option>
+            <option value="inactive">Inactivos</option>
+          </select>
+        </div>
+
+        <!-- Tabla de clientes (tbody se inyecta desde renderClients()) -->
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Nombre</th>
+                <th>Razón Social</th>
+                <th>Teléfono</th>
+                <th>Estado</th>
+                <th>Registro</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="clients-tbody">
+              <!-- renderClients() inyecta filas aquí -->
+            </tbody>
+          </table>
+        </div>
+
+      </div><!-- /view-clients -->
+
+
+      <!-- ========================================================
+        VISTA: TAREAS CONTABLES
+        Tablero Kanban + Vista Lista con alertas visuales.
+        ID: view-tasks
+      ======================================================== -->
+      <div class="view" id="view-tasks">
+
+        <div class="section-header">
+          <div>
+            <div class="section-title">Tablero de Tareas</div>
+            <div class="section-subtitle">Sistema Kanban de gestión contable</div>
+          </div>
+          <!-- Botón para alternar entre Kanban y Lista (toggleTaskView en app.js) -->
+          <button class="btn-secondary" id="task-view-toggle" onclick="toggleTaskView()">
+            📋 Vista Lista
+          </button>
+        </div>
+
+        <!-- Filtros de tareas -->
+        <div class="filters-bar">
+          <input
+            class="search-input"
+            id="task-search"
+            placeholder="🔍 Buscar tarea..."
+            oninput="renderTasks()">
+          <!-- Se llena dinámicamente con populateTaskFilters() -->
+          <select class="filter-select" id="task-client-filter" onchange="renderTasks()">
+            <option value="">Todos los clientes</option>
+          </select>
+          <select class="filter-select" id="task-priority-filter" onchange="renderTasks()">
+            <option value="">Todas las prioridades</option>
+            <option value="high">🔴 Alta</option>
+            <option value="medium">🟡 Media</option>
+            <option value="low">🟢 Baja</option>
+          </select>
+        </div>
+
+        <!-- Vista Kanban (3 columnas): Pendiente | En proceso | Completado -->
+        <!-- renderKanban() inyecta el tablero completo aquí -->
+        <div id="tasks-kanban"></div>
+
+        <!-- Vista Lista (tabla): alternativa al Kanban -->
+        <!-- renderTaskList() inyecta la tabla aquí -->
+        <div id="tasks-list" style="display:none;"></div>
+
+      </div><!-- /view-tasks -->
+
+
+      <!-- ========================================================
+        VISTA: REGISTRO DE FALTAS
+        Control de incumplimientos por cliente y mes.
+        ID: view-absences
+      ======================================================== -->
+      <div class="view" id="view-absences">
+
+        <div class="section-header">
+          <div>
+            <div class="section-title">Registro de Faltas</div>
+            <div class="section-subtitle">Control de incumplimientos por cliente y período</div>
+          </div>
+        </div>
+
+        <!-- Filtros: por cliente y por mes -->
+        <div class="filters-bar">
+          <!-- Se llena con populateAbsenceFilters() -->
+          <select class="filter-select" id="absence-client-filter" onchange="renderAbsences()">
+            <option value="">Todos los clientes</option>
+          </select>
+          <select class="filter-select" id="absence-month-filter" onchange="renderAbsences()">
+            <option value="">Todos los meses</option>
+            <option value="1">Enero</option>
+            <option value="2">Febrero</option>
+            <option value="3">Marzo</option>
+            <option value="4">Abril</option>
+            <option value="5">Mayo</option>
+            <option value="6">Junio</option>
+            <option value="7">Julio</option>
+            <option value="8">Agosto</option>
+            <option value="9">Septiembre</option>
+            <option value="10">Octubre</option>
+            <option value="11">Noviembre</option>
+            <option value="12">Diciembre</option>
+          </select>
+        </div>
+
+        <!-- Tabla de faltas (tbody se inyecta desde renderAbsences()) -->
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Período</th>
+                <th>Observaciones</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="absences-tbody">
+              <!-- renderAbsences() inyecta filas aquí -->
+            </tbody>
+          </table>
+        </div>
+
+      </div><!-- /view-absences -->
+
+
+      <!-- ========================================================
+        VISTA: AGENDA DE CITAS
+        Seguimiento de reuniones con clientes.
+        Las citas no atendidas se detectan automáticamente.
+        ID: view-appointments
+      ======================================================== -->
+      <div class="view" id="view-appointments">
+
+        <div class="section-header">
+          <div>
+            <div class="section-title">Agenda de Citas</div>
+            <div class="section-subtitle">Seguimiento de reuniones con clientes</div>
+          </div>
+        </div>
+
+        <!-- Filtros: por cliente y por estado -->
+        <div class="filters-bar">
+          <!-- Se llena con populateApptFilters() -->
+          <select class="filter-select" id="appt-client-filter" onchange="renderAppointments()">
+            <option value="">Todos los clientes</option>
+          </select>
+          <select class="filter-select" id="appt-status-filter" onchange="renderAppointments()">
+            <option value="">Todos los estados</option>
+            <option value="scheduled">📅 Programada</option>
+            <option value="completed">✅ Realizada</option>
+            <option value="missed">❌ No realizada</option>
+            <option value="cancelled">🚫 Cancelada</option>
+          </select>
+        </div>
+
+        <!-- Tabla de citas (tbody se inyecta desde renderAppointments()) -->
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Título</th>
+                <th>Fecha y Hora</th>
+                <th>Estado</th>
+                <th>Notas</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="appointments-tbody">
+              <!-- renderAppointments() inyecta filas aquí -->
+            </tbody>
+          </table>
+        </div>
+
+      </div><!-- /view-appointments -->
+
+
+      <!-- ========================================================
+        VISTA: REPORTE MENSUAL
+        Resumen de faltas e incidencias del mes actual.
+        Con opción de exportar backup JSON.
+        ID: view-reports
+      ======================================================== -->
+      <div class="view" id="view-reports">
+
+        <div class="section-header">
+          <div>
+            <div class="section-title">Reporte Mensual</div>
+            <div class="section-subtitle">Resumen de faltas e incidencias del período actual</div>
+          </div>
+          <!-- Botón para exportar backup (exportData() en app.js) -->
+          <button class="btn-secondary" onclick="exportData()">
+            ⬇️ Exportar Backup JSON
+          </button>
+        </div>
+
+        <!-- Contenido del reporte (se inyecta desde renderReports()) -->
+        <div id="report-content">
+          <!-- renderReports() inyecta el reporte completo aquí -->
+        </div>
+
+      </div><!-- /view-reports -->
+
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+
+
+  <!-- ============================================================
+    SCRIPT PRINCIPAL
+    Se carga al final del body para que el DOM esté listo.
+    Contiene toda la lógica del sistema.
+  ============================================================ -->
+  <script src="app.js"></script>
+
+</body>
+</html>
