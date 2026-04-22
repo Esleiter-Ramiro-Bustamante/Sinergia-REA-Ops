@@ -7,23 +7,30 @@
     Archivo: index.html
     Descripción: Estructura principal del panel administrativo.
 
-    ARCHIVOS DEL PROYECTO:
-      index.html  → Esta estructura HTML (esqueleto visual)
-      styles.css  → Todos los estilos y colores del sistema
-      app.js      → Toda la lógica, datos y comportamiento
+    ARQUITECTURA (ADD — Architecture-Driven Development):
+      index.html          → Esqueleto visual (este archivo)
+      styles.css          → Estilos y variables de diseño
+      js/main.js          → Bootstrap único — punto de entrada
+      js/core/            → Firebase, Auth, DB, Alertas, Utils
+      js/ui/              → Navegación (MODULE_REGISTRY) y Audio
+      js/modules/         → Módulos de negocio autocontenidos
 
     DEPENDENCIAS EXTERNAS:
-      - Google Fonts: DM Serif Display + DM Sans
-      - SweetAlert2:  Modales y notificaciones
+      - Google Fonts : DM Serif Display + Outfit
+      - SweetAlert2  : Modales y notificaciones
+      - Howler.js    : Motor de audio para alertas
 
-    Para modificar colores → edita las variables en styles.css (:root)
-    Para agregar módulos  → agrega una .view en este HTML y su lógica en app.js
+    Para modificar colores → edita variables en styles.css (:root)
+    Para agregar módulos  → ver instrucciones en js/ui/navigation.js
   ================================================================
   -->
 
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sinergia REA — Sistema de Control Contable</title>
+
+  <!-- PWA Manifest — habilita notificaciones push en todos los navegadores -->
+  <link rel="manifest" href="/manifest.json">
 
   <!-- Google Fonts: Outfit bold + DM Serif Display -->
   <link
@@ -39,14 +46,35 @@
   <!-- Estilos del sistema -->
   <link rel="stylesheet" href="styles.css">
 
+  <!-- Estilos del módulo de Declaraciones SAT -->
+  <link rel="stylesheet" href="src/styles/declaraciones.css">
+
 </head>
 <body>
 
-  <!-- ============================================================
-    OVERLAY MÓVIL
-    Fondo oscuro que aparece detrás del sidebar en mobile.
-    Al hacer clic, cierra el sidebar.
-  ============================================================ -->
+  <!-- Cargador Inicial: Evita el parpadeo de datos vacíos -->
+  <div id="initial-loader-overlay" style="
+    position: fixed; inset: 0; background: #0b1640; z-index: 9999;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: opacity 0.5s ease, visibility 0.5s;
+  ">
+    <div style="font-family:'DM Serif Display',serif; font-size:32px; color:#fff; margin-bottom:20px;">
+      Sinergia <span style="color:#f5a623;">REA</span>
+    </div>
+    <div class="loader-spinner" style="
+      width: 40px; height: 40px; border: 4px solid rgba(245,166,35,0.1);
+      border-top-color: #f5a623; border-radius: 50%;
+      animation: spin 1s linear infinite;
+    "></div>
+    <div style="color:#6880c8; font-size:12px; margin-top:20px; font-weight:700; letter-spacing:2px; text-transform:uppercase;">
+      Sincronizando datos...
+    </div>
+  </div>
+
+  <style>
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+
   <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
 
 
@@ -60,6 +88,10 @@
     <div class="sidebar-brand">
       <div class="brand-logo">Sinergia <span>REA</span></div>
       <div class="brand-sub">Servicios Contables</div>
+      <button class="btn-notify-setup" onclick="window.__setupNotifications()" title="Activar notificaciones en este equipo">
+        🔔 Activar Alertas
+      </button>
+    </div>
       <div class="brand-badge">Sistema v1.0</div>
     </div>
 
@@ -69,36 +101,42 @@
       <div class="nav-section">Principal</div>
 
       <!-- Dashboard: vista general del sistema -->
-      <div class="nav-item active" onclick="navigate('dashboard')">
+      <!-- Los onclick son manejados por bindStaticEvents() en js/ui/navigation.js -->
+      <div class="nav-item active">
         <span class="icon">📊</span> Dashboard
       </div>
 
       <div class="nav-section">Gestión</div>
 
       <!-- Módulo Clientes -->
-      <div class="nav-item" onclick="navigate('clients')">
+      <div class="nav-item">
         <span class="icon">👤</span> Clientes
       </div>
 
       <!-- Módulo Tareas Contables -->
-      <div class="nav-item" onclick="navigate('tasks')">
+      <div class="nav-item">
         <span class="icon">📋</span> Tareas
       </div>
 
       <!-- Módulo Registro de Faltas -->
-      <div class="nav-item" onclick="navigate('absences')">
+      <div class="nav-item">
         <span class="icon">❌</span> Faltas
       </div>
 
       <!-- Módulo Agenda de Citas -->
-      <div class="nav-item" onclick="navigate('appointments')">
+      <div class="nav-item">
         <span class="icon">📅</span> Citas
       </div>
 
       <div class="nav-section">Reportes</div>
 
+      <!-- Módulo Declaraciones Mensuales SAT -->
+      <div class="nav-item">
+        <span class="icon">🏛️</span> Declaraciones SAT
+      </div>
+
       <!-- Módulo Reporte Mensual -->
-      <div class="nav-item" onclick="navigate('reports')">
+      <div class="nav-item">
         <span class="icon">📈</span> Reporte Mensual
       </div>
 
@@ -144,6 +182,7 @@
         </div>
 
         <!-- Botón de acción principal: cambia según la vista activa -->
+        <div id="user-info-topbar"></div>
         <button class="btn-primary" id="btn-add" onclick="handleAddClick()">
           ＋ Nuevo
         </button>
@@ -168,7 +207,7 @@
       <div class="view active" id="view-dashboard">
 
         <!-- Grid de tarjetas KPI (métricas clave) -->
-        <!-- Los valores se llenan dinámicamente desde renderDashboard() en app.js -->
+        <!-- Los valores se llenan dinámicamente desde js/modules/dashboard/index.js -->
         <div class="cards-grid">
 
           <div class="kpi-card gold">
@@ -250,13 +289,18 @@
             id="client-search"
             placeholder="🔍 Buscar por nombre o razón social..."
             oninput="renderClients()">
-          <select
-            class="filter-select"
-            id="client-status-filter"
-            onchange="renderClients()">
+          <select id="client-status-filter" class="filter-select" onchange="renderClients()">
             <option value="">Todos los estados</option>
             <option value="active">Activos</option>
             <option value="inactive">Inactivos</option>
+          </select>
+
+          <select id="client-regime-filter" class="filter-select" onchange="renderClients()">
+            <option value="">Todos los regímenes</option>
+            <option value="626">RESICO (626)</option>
+            <option value="605">Sueldos (605)</option>
+            <option value="612">Act. Empresariales (612)</option>
+            <option value="606">Arrendamiento (606)</option>
           </select>
         </div>
 
@@ -265,11 +309,13 @@
           <table class="data-table">
             <thead>
               <tr>
+                <th>#</th>
                 <th>Nombre</th>
                 <th>Razón Social</th>
                 <th>Teléfono</th>
+                <th>Régimen Fiscal</th>
+                <th>Giro / IVA</th>
                 <th>Estado</th>
-                <th>Registro</th>
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -420,25 +466,26 @@
         </div>
 
         <!-- Tabla de citas (tbody se inyecta desde renderAppointments()) -->
-        <div class="table-wrap">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Cliente</th>
-                <th>Título</th>
-                <th>Fecha y Hora</th>
-                <th>Estado</th>
-                <th>Notas</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody id="appointments-tbody">
-              <!-- renderAppointments() inyecta filas aquí -->
-            </tbody>
-          </table>
+        <div id="appointments-grid" class="appointments-grid">
+          <!-- Tarjetas dinámicas vía appointments/index.js -->
         </div>
 
       </div><!-- /view-appointments -->
+
+
+      <!-- ========================================================
+        VISTA: DECLARACIONES SAT  ← NUEVA (no modifica vistas existentes)
+        Control de avance RESICO (626) y Sueldos y Salarios (605).
+        El contenido se inyecta completamente desde declaraciones.ui.js
+        ID: view-declaraciones
+      ======================================================== -->
+      <div class="view" id="view-declaraciones">
+        <!-- declaraciones.ui.js → initDeclaracionesView() inyecta aquí -->
+        <div class="empty-state" style="padding:60px">
+          <div class="empty-icon">🏛️</div>
+          <div class="empty-title">Cargando módulo de declaraciones...</div>
+        </div>
+      </div><!-- /view-declaraciones -->
 
 
       <!-- ========================================================
@@ -454,7 +501,7 @@
             <div class="section-title">Reporte Mensual</div>
             <div class="section-subtitle">Resumen de faltas e incidencias del período actual</div>
           </div>
-          <!-- Botón para exportar backup (exportData() en app.js) -->
+          <!-- Botón para exportar backup (exportData() en js/modules/reports/index.js) -->
           <button class="btn-secondary" onclick="exportData()">
             ⬇️ Exportar Backup JSON
           </button>
@@ -473,11 +520,22 @@
 
 
   <!-- ============================================================
-    SCRIPT PRINCIPAL
-    Se carga al final del body para que el DOM esté listo.
-    Contiene toda la lógica del sistema.
+    SCRIPT ÚNICO DE ENTRADA
+    La nueva arquitectura modular (ADD) carga todo desde js/main.js.
+
+    Patrón: Repository + Registry + Facade
+      - js/core/firebase.js  → Singleton Firebase
+      - js/core/db.js        → Repository Firestore
+      - js/core/auth.js      → Facade: Auth + FCM
+      - js/ui/navigation.js  → Registry de módulos
+      - js/main.js           → Orquestador principal
+
+    Para agregar un módulo:
+      1. Crear js/modules/[nombre]/index.js
+      2. Registrar en MODULE_REGISTRY de js/ui/navigation.js
+      3. Agregar vista en este HTML
   ============================================================ -->
-  <script src="app.js"></script>
+  <script type="module" src="js/main.js"></script>
 
 </body>
 </html>

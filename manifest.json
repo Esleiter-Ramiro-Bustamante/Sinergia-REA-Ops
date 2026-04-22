@@ -1,0 +1,15 @@
+{
+  "name": "Sinergia REA Ops",
+  "short_name": "Sinergia",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#0b1640",
+  "theme_color": "#f5a623",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2942/2942254.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

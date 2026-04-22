@@ -1,0 +1,455 @@
+/* ================================================================
+   SINERGIA REA â€” declaraciones.css
+   Estilos exclusivos del mÃ³dulo de Declaraciones SAT.
+   INSTRUCCIONES: AÃ±adir al final de styles.css o linkear
+   como hoja separada en index.html.
+   No modifica estilos existentes.
+   ================================================================ */
+
+/* â”€â”€ Toolbar: selector de periodo + tabs â”€â”€ */
+.decl-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 20px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+  box-shadow: var(--shadow-sm);
+}
+
+.decl-periodo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.decl-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* â”€â”€ Tabs RESICO / Sueldos â”€â”€ */
+.decl-tabs {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+  flex-wrap: wrap;
+}
+
+.decl-tab {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: 'DM Sans', 'Outfit', sans-serif;
+  white-space: nowrap;
+}
+
+.decl-tab:hover {
+  border-color: var(--brand-navy);
+  color: var(--brand-navy);
+}
+
+/* Tab activo: fondo azul marino de la marca */
+.decl-tab.active {
+  background: var(--brand-navy);
+  border-color: var(--brand-navy);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(26,35,126,0.3);
+}
+
+/* â”€â”€ Barra de resumen de progreso â”€â”€ */
+.decl-resumen-bar {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-sm);
+  flex-wrap: wrap;
+}
+
+.decl-resumen-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-width: 70px;
+}
+
+/* Divisor vertical entre stats */
+.decl-divider {
+  width: 1px;
+  height: 36px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+/* â”€â”€ Checkboxes de la tabla de declaraciones â”€â”€ */
+.decl-check {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--brand-navy); /* Color del checkbox cuando estÃ¡ marcado */
+  border-radius: 4px;
+  transition: transform 0.15s;
+}
+
+.decl-check:hover {
+  transform: scale(1.15);
+}
+
+/* â”€â”€ Estilos de las filas por estado â”€â”€ */
+
+/* Fila completa: fondo verde muy sutil */
+tr:has(.decl-check[data-estado="completo"]) {
+  background: linear-gradient(90deg, rgba(22,163,74,0.04), transparent) !important;
+}
+
+/* â”€â”€ Progreso inline en la tabla â”€â”€ */
+.decl-progress-bar {
+  height: 6px;
+  background: rgba(26,35,126,0.1);
+  border-radius: 3px;
+  overflow: hidden;
+  flex: 1;
+}
+
+.decl-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.35s ease, background 0.35s ease;
+}
+
+/* â”€â”€ Mobile responsive â”€â”€ */
+
+/* Tablet (839-1199px) */
+@media (max-width:1199px) and (min-width:840px) {
+  .decl-toolbar {
+    gap:12px;
+    padding:12px 16px;
+  }
+  .decl-tabs {
+    gap:6px;
+  }
+  .decl-tab {
+    padding:6px 12px;
+    font-size:12px;
+  }
+  .decl-resumen-bar {
+    gap:12px;
+    padding:12px 16px;
+  }
+  .decl-resumen-stat {
+    min-width:60px;
+    font-size:12px;
+  }
+}
+
+/* Tablet pequeÃ±a (600-839px) */
+@media (max-width:839px) {
+  .decl-toolbar {
+    flex-direction:column;
+    align-items:flex-start;
+    gap:10px;
+    padding:10px 12px;
+  }
+  .decl-periodo-wrap {
+    width:100%;
+    gap:8px;
+  }
+  .filter-select {
+    flex:1;
+    padding:6px 8px;
+    font-size:12px;
+  }
+  .decl-tabs {
+    width:100%;
+    margin:0;
+    gap:6px;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .decl-tab {
+    flex-shrink:0;
+    padding:6px 12px;
+    font-size:11px;
+    white-space:nowrap;
+  }
+  .decl-resumen-bar {
+    flex-wrap:wrap;
+    gap:8px;
+    padding:10px 12px;
+  }
+  .decl-resumen-stat {
+    min-width:70px;
+    gap:2px;
+    font-size:11px;
+  }
+  .decl-divider {
+    height:24px;
+  }
+  .table-wrap {
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+  }
+  .data-table {
+    font-size:11px;
+    min-width:100%;
+  }
+  .data-table th {
+    padding:6px 4px;
+    font-size:10px;
+  }
+  .data-table td {
+    padding:6px 4px;
+    font-size:10px;
+  }
+  .decl-check {
+    width:16px;
+
+height:16px;
+  }
+  .btn-secondary {
+    padding:6px 10px;
+    font-size:11px;
+  }
+}
+
+/* MÃ³vil (hasta 599px) */
+@media (max-width:599px) {
+  .decl-toolbar {
+    flex-direction:column;
+    align-items:stretch;
+    gap:8px;
+    padding:8px 10px;
+  }
+  .decl-periodo-wrap {
+    width:100%;
+    gap:6px;
+    flex-direction:column;
+  }
+  .decl-label {
+    font-size:10px;
+  }
+  .filter-select {
+    width:100%;
+    padding:6px 8px;
+    font-size:12px;
+  }
+  .decl-tabs {
+    width:100%;
+    margin:0;
+    gap:4px;
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    padding:0 0 4px 0;
+  }
+  .decl-tab {
+    flex-shrink:0;
+    padding:6px 10px;
+    font-size:10px;
+    white-space:nowrap;
+    border-radius:6px;
+  }
+  .decl-resumen-bar {
+    flex-wrap:wrap;
+    gap:6px;
+    padding:8px 10px;
+    border-radius:10px;
+  }
+  .decl-resumen-stat {
+    min-width:60px;
+    gap:2px;
+    font-size:10px;
+    align-items:center;
+  }
+  .decl-resumen-stat span:first-child {
+    font-size:14px;
+    font-weight:900;
+  }
+  .decl-divider {
+    display:none;
+  }
+  .table-wrap {
+    overflow-x:auto;
+    -webkit-overflow-scrolling:touch;
+    border-radius:8px;
+  }
+  .data-table {
+    font-size:9px;
+    min-width:100%;
+  }
+  .data-table th {
+    padding:4px 3px;
+    font-size:8px;
+    text-align:center;
+  }
+  .data-table td {
+    padding:4px 3px;
+    font-size:9px;
+    text-align:center;
+  }
+  .data-table tr {
+    height:auto;
+  }
+  .decl-check {
+    width:14px;
+    height:14px;
+  }
+  .decl-badge-estado {
+    font-size:9px;
+    padding:2px 6px !important;
+  }
+  .btn-secondary {
+    padding:5px 8px;
+    font-size:10px;
+  }
+  .section-header {
+    flex-direction:column;
+    align-items:flex-start;
+    gap:8px;
+  }
+  .section-title {
+    font-size:14px;
+  }
+  .section-subtitle {
+    font-size:10px;
+  }
+}
+
+/* MÃ³vil muy pequeÃ±o (hasta 359px) */
+@media (max-width:359px) {
+  .decl-toolbar {
+    padding:6px 8px;
+    gap:6px;
+  }
+  .decl-tab {
+    padding:5px 8px;
+    font-size:9px;
+  }
+  .decl-resumen-bar {
+    padding:6px 8px;
+  }
+  .data-table {
+    font-size:8px;
+  }
+  .data-table th,
+  .data-table td {
+    padding:3px 2px;
+    font-size:8px;
+  }
+  .decl-check {
+    width:12px;
+    height:12px;
+  }
+  .btn-secondary {
+    font-size:9px;
+    padding:4px 6px;
+  }
+}
+
+/* ── Botones de Acción (Mejorados) ── */
+.btn-action-baja {
+  background: rgba(249, 115, 22, 0.08);
+  color: #f97316;
+  border: 1px solid rgba(249, 115, 22, 0.2);
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-action-baja:hover {
+  background: #f97316;
+  color: white;
+  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.3);
+}
+
+.btn-action-reactivar {
+  background: rgba(22, 163, 74, 0.08);
+  color: #16a34a;
+  border: 1px solid rgba(22, 163, 74, 0.2);
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-action-reactivar:hover {
+  background: #16a34a;
+  color: white;
+}
+
+.btn-action-delete {
+  background: rgba(239, 68, 68, 0.08);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.btn-action-delete:hover {
+  background: #ef4444;
+  color: white;
+}
+
+/* ── Etiquetas y Estados ── */
+.table-group-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+  margin-top: 24px;
+}
+
+.badge-status {
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-transform: uppercase;
+}
+
+.progress-container {
+  flex: 1;
+  height: 6px;
+  background: rgba(26, 35, 126, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.empty-state {
+  padding: 60px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 500;
+}
