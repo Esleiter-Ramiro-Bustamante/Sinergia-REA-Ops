@@ -20,8 +20,20 @@
      usuario autenticado, nunca en localStorage ni en texto plano.
    - El token FCM se almacena únicamente en Firestore bajo el UID del
      usuario autenticado, nunca en localStorage ni en texto plano.
-   - Se registra el Service Worker SOLO desde el mismo origen.
+    - Se registra el Service Worker SOLO desde el mismo origen.
    ================================================================ */
+
+const CACHE_VERSION = 'sinergia-v1.6';
+
+// Archivos críticos para modo offline y carga rápida
+const PRECACHE_ASSETS = [
+  '/',
+  '/index.html',
+  '/styles.css',
+  '/manifest.json',
+  '/SD_ALERT_33.mp3',
+  '/src/styles/declaraciones.css'
+];
 
 /* ── Almacenar estado del SW para debugging ── */
 const swState = {
@@ -30,6 +42,7 @@ const swState = {
   messagingReady: false,
   errors: []
 };
+
 
 console.log('[SW] ✓ Service Worker iniciando en:', self.location.href);
 
@@ -102,21 +115,38 @@ if (typeof firebase !== 'undefined' && firebase.apps) {
 // El SW debe llegar al estado 'activated' de forma natural.
 self.addEventListener('install', event => {
   console.log('[SW] 📦 install event - Service Worker instalándose...');
-  // NO skipWaiting() aquí — dejamos que el ciclo de vida sea natural
+  // Pre-cachear assets críticos
+  event.waitUntil(
+    caches.open(CACHE_VERSION)
+      .then(cache => cache.addAll(PRECACHE_ASSETS))
+      .then(() => console.log('[SW] ✓ Assets pre-cacheados'))
+      .catch(err => console.warn('[SW] ⚠️ Error en pre-caché:', err.message))
+  );
 });
+
 
 /* ── Evento de activación del SW ── */
 self.addEventListener('activate', event => {
   console.log('[SW] ⚡ activate event - Service Worker activándose...');
-  // clients.claim() toma control inmediato de las pestañas abiertas.
-  // Esto es seguro aquí (en activate, no en install).
+  
   event.waitUntil(
-    self.clients.claim().then(() => {
+    Promise.all([
+      // Limpiar caches viejos
+      caches.keys().then(keys => {
+        return Promise.all(
+          keys.filter(key => key !== CACHE_VERSION && key.startsWith('sinergia-'))
+              .map(key => caches.delete(key))
+        );
+      }),
+      // Tomar control de los clientes inmediatamente
+      self.clients.claim()
+    ]).then(() => {
       swState.initialized = true;
-      console.log('[SW] ✓ clients.claim() completado — SW activo y en control');
+      console.log('[SW] ✓ Activación completa y control tomado');
     })
   );
 });
+
 
 /* ── Mensajes desde la app para debugging y control ── */
 self.addEventListener('message', event => {
@@ -125,12 +155,39 @@ self.addEventListener('message', event => {
     event.ports[0]?.postMessage(swState);
   }
   // Permite que la app fuerce skipWaiting() de forma controlada
-  // cuando hay una actualización disponible (waiting SW)
   if (event.data?.type === 'SKIP_WAITING') {
-    console.log('[SW] SKIP_WAITING recibido — activando nueva versión...');
+    console.log('[SW] SKIP_WAITING recibido — forzando activación...');
     self.skipWaiting();
   }
 });
+
+/* ── Estrategia de Caché: Network First con fallback ── */
+self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') return;
+  
+  const url = new URL(event.request.url);
+  if (url.origin !== self.location.origin) return;
+
+  event.respondWith(
+    fetch(event.request)
+      .then(response => {
+        if (response && response.status === 200) {
+          const cloned = response.clone();
+          caches.open(CACHE_VERSION).then(cache => cache.put(event.request, cloned));
+        }
+        return response;
+      })
+      .catch(() => {
+        return caches.match(event.request).then(cached => {
+          if (cached) return cached;
+          if (url.pathname.endsWith('.html') || !url.pathname.includes('.')) {
+            return caches.match('/index.html');
+          }
+        });
+      })
+  );
+});
+
 
 /* ── Notificaciones en background (app cerrada o minimizada) ── */
 if (messaging && swState.messagingReady) {

@@ -32,34 +32,53 @@
   <!-- PWA Manifest — habilita notificaciones push en todos los navegadores -->
   <link rel="manifest" href="/manifest.json">
 
-  <!-- Registro del Service Worker de Caché + Auto-update -->
+  <!-- Registro y Control del Service Worker Único (Caché + FCM) -->
   <script>
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').then(reg => {
-        // Escuchar cuando hay un nuevo SW esperando (update disponible)
-        reg.addEventListener('updatefound', () => {
-          const newWorker = reg.installing;
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              document.getElementById('sw-update-banner').style.display = 'flex';
-            }
+      window.addEventListener('load', () => {
+        // Buscamos el registro existente (que hace auth.js) para no duplicar
+        navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js').then(reg => {
+          if (!reg) return;
+
+          // 1. Detectar si ya hay uno esperando (por un refresh previo)
+          if (reg.waiting) {
+            document.getElementById('sw-update-banner').style.display = 'flex';
+          }
+
+          // 2. Detectar nuevos updates que lleguen mientras la app está abierta
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                document.getElementById('sw-update-banner').style.display = 'flex';
+              }
+            });
           });
         });
-      }).catch(err => console.warn('[SW] Error registrando sw.js:', err));
+      });
 
-      // Recargar cuando el nuevo SW tome control
+      // Recargar automáticamente cuando el nuevo SW tome el mando
+      let refreshing = false;
       navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing) return;
+        refreshing = true;
         window.location.reload();
       });
 
-      // Forzar actualización inmediata
+      // Función global para el botón "Actualizar ahora"
       window.__swUpdate = function() {
-        navigator.serviceWorker.ready.then(reg => {
-          if (reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js').then(reg => {
+          if (reg && reg.waiting) {
+            reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+          } else {
+            // Si por alguna razón no hay waiting, solo recargamos
+            window.location.reload();
+          }
         });
       };
     }
   </script>
+
 
 
   <!-- Google Fonts: Outfit bold + DM Serif Display -->
