@@ -1,5 +1,5 @@
 /* ================================================================
-   SINERGIA REA — Core: Auth (Facade)
+   SINERGIA REA — Core: Auth (Facade)  (FIX v2)
    Envuelve Firebase Auth + FCM + pantallas de carga en una
    interfaz simple: startAuth(onReady).
 
@@ -12,6 +12,13 @@
    Uso desde main.js:
      import { startAuth } from './core/auth.js';
      startAuth(init); // init() se llama cuando todo está listo
+
+   FIX v2:
+     - onMessage() ya NO crea new Howl() directamente.
+       Usa playForegroundAlert() del módulo sound.js, que reutiliza
+       las instancias ya inicializadas por el usuario y evita el error
+       "AudioContext was not allowed to start".
+     - Se elimina el import innecesario de Howl dentro del callback.
    ================================================================ */
 
 import {
@@ -24,6 +31,9 @@ import {
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging.js';
 import { auth, messaging } from './firebase.js';
 import { loadAllFromFirestore } from './db.js';
+
+// FIX v2: importar función de audio del módulo centralizado
+import { playForegroundAlert } from '../ui/sound.js';
 
 /* ── Usuarios autorizados ─────────────────────────────────────── */
 const USUARIOS = {
@@ -148,6 +158,7 @@ async function _initFCM() {
   if (!('serviceWorker' in navigator) || !('Notification' in window)) return;
 
   try {
+    // Limpiar SWs huérfanos que no sean el nuestro
     const existing = await navigator.serviceWorker.getRegistrations();
     for (const reg of existing) {
       if (!reg.scope.endsWith('/firebase-messaging-sw.js') &&
@@ -189,30 +200,37 @@ async function _initFCM() {
               createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
             });
           });
-      } catch { /* Token guardado es opcional */ }
+      } catch { /* Guardar token es opcional, no bloquea */ }
     }
 
-    // Notificaciones en foreground
+    // ── Notificaciones en FOREGROUND (app abierta) ──────────────
+    // FIX v2: no crear new Howl() aquí — el AudioContext estaría bloqueado.
+    // playForegroundAlert() reutiliza las instancias de sound.js ya
+    // inicializadas por el primer click del usuario.
     onMessage(messaging, payload => {
+      console.log('[FCM] 📩 Mensaje foreground recibido:', payload);
+
       const title = payload.notification?.title || '🔔 Sinergia REA';
       const body  = payload.notification?.body  || 'Tienes una alerta pendiente';
+
+      // Mostrar notificación visual del navegador
       if (Notification.permission === 'granted') {
         new Notification(title, {
           body,
-          icon:  'https://cdn-icons-png.flaticon.com/512/2942/2942254.png',
-          badge: 'https://cdn-icons-png.flaticon.com/512/2942/2942254.png',
-          tag:   'sinergia-rea-foreground',
+          icon:     'https://cdn-icons-png.flaticon.com/512/2942/2942254.png',
+          badge:    'https://cdn-icons-png.flaticon.com/512/2942/2942254.png',
+          tag:      'sinergia-rea-foreground',
           renotify: true
         });
-        // Reproducir sonido de alerta via Howler.js
-        if (typeof Howl !== 'undefined') {
-          const snd = new Howl({ src: ['/SD_ALERT_33.mp3'], volume: 0.8 });
-          snd.play();
-        }
       }
+
+      // FIX v2: reproducir sonido usando el módulo centralizado
+      // Determinar nivel según datos del payload (si se envían) o usar crítico por defecto
+      const nivel = payload.data?.nivel === 'advertencia' ? 'advertencia' : 'critico';
+      playForegroundAlert(nivel);
     });
 
-    console.log('[FCM] ✅ Push notifications ACTIVAS');
+    console.log('[FCM] ✅ Push notifications ACTIVAS. Token:', token.substring(0, 20) + '...');
     window.__FCM_DEBUG = { status: 'ACTIVE', token, uid };
 
   } catch (err) {
@@ -223,9 +241,11 @@ async function _initFCM() {
     );
     window.__FCM_DEBUG = { status: 'ERROR', error: err.message };
     if (!esPushError) {
-      console.error('[FCM] Error:', err.message);
+      console.error('[FCM] Error inesperado:', err.message);
     } else {
-      console.warn('[FCM] Push Service no disponible en este navegador.');
+      // Este error desaparece una vez que el dominio esté autorizado
+      // en Firebase Console → Authentication → Authorized domains
+      console.warn('[FCM] Push Service no disponible. Verifica que el dominio esté autorizado en Firebase Console.');
     }
   }
 }
