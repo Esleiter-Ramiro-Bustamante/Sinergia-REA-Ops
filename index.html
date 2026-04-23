@@ -36,11 +36,11 @@
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        // Buscamos el registro existente (que hace auth.js) para no duplicar
-        navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js').then(reg => {
+        // Buscamos el registro existente (que hace auth.js) en el scope raíz
+        navigator.serviceWorker.getRegistration('/').then(reg => {
           if (!reg) return;
 
-          // 1. Detectar si ya hay uno esperando (por un refresh previo)
+          // 1. Detectar si ya hay uno esperando
           if (reg.waiting) {
             document.getElementById('sw-update-banner').style.display = 'flex';
           }
@@ -67,11 +67,10 @@
 
       // Función global para el botón "Actualizar ahora"
       window.__swUpdate = function() {
-        navigator.serviceWorker.getRegistration('/firebase-messaging-sw.js').then(reg => {
+        navigator.serviceWorker.getRegistration('/').then(reg => {
           if (reg && reg.waiting) {
             reg.waiting.postMessage({ type: 'SKIP_WAITING' });
           } else {
-            // Si por alguna razón no hay waiting, solo recargamos
             window.location.reload();
           }
         });
