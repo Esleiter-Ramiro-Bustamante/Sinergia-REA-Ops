@@ -339,3 +339,16 @@ function _fireDailyReminder() {
   // key = null: no anti-duplicado, siempre notifica a las 14:50
   _desktopNotify(title, body, null);
 }
+
+/**
+ * Función de prueba para verificar sonido y notificaciones.
+ */
+export function testNotify() {
+  console.log('[Alerts] 🧪 Disparando notificación de prueba...');
+  _desktopNotify(
+    '🔔 Prueba de Sinergia REA',
+    '¡El sistema de audio y notificaciones está funcionando correctamente! ✨',
+    null // null para que siempre suene al probar
+  );
+}
+

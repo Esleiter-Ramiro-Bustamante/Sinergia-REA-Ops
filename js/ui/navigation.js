@@ -17,7 +17,8 @@ import { renderAppointments, addAppointment, deleteAppt,
          populateApptFilters }                                     from '../modules/appointments/index.js';
 import { renderReports, exportData }                               from '../modules/reports/index.js';
 import { initDeclaracionesView }                                   from '../modules/declaraciones/index.js';
-import { showAlertsPanel }                                         from '../core/alerts.js';
+import { showAlertsPanel, testNotify }                                  from '../core/alerts.js';
+
 import { dbGet, dbCreate, dbUpdate, dbDelete,
          deleteClientCascade }                                     from '../core/db.js';
 
@@ -171,7 +172,11 @@ export function bindStaticEvents() {
 window.closeSidebar       = closeSidebar;
 window.toggleSidebar      = toggleSidebar;
 window.showAlertsPanel    = showAlertsPanel;
+window.__testNotify       = testNotify;
+
 window.handleAddClick     = handleAddClick;
+
+
 window.renderClients      = renderClients;
 window.renderTasks        = renderTasks;
 window.renderAbsences     = renderAbsences;
