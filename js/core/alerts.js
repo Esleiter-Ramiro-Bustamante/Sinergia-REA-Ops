@@ -14,7 +14,7 @@
 
 import { dbGet, dbUpdate, getDB, saveDB } from './db.js';
 import { daysUntil, daysDiff, clientName, fmtDateTime, MONTHS } from './utils.js';
-import { playAlertSound } from '../ui/sound.js';
+import { playAlertSound, initHowler } from '../ui/sound.js';
 
 /* ── Constantes ────────────────────────────────────────────────── */
 const STALE_DAYS = 7;  // Días sin actualizar → tarea abandonada
@@ -344,6 +344,9 @@ function _fireDailyReminder() {
  * Función de prueba para verificar sonido y notificaciones.
  */
 export function testNotify() {
+  // Asegurar que Howler esté despierto (gesto del usuario)
+  initHowler();
+
   console.log('[Alerts] 🧪 Disparando notificación de prueba...');
   _desktopNotify(
     '🔔 Prueba de Sinergia REA',

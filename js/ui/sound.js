@@ -42,7 +42,14 @@ export function recordUserActivity() {
  * startUserActivityTracker() lo conecta automáticamente al primer click.
  */
 export function initHowler() {
-  if (howlReady) return;
+  if (howlReady) {
+    // Si ya está listo pero el contexto está suspendido, intentar reanudar
+    if (typeof Howler !== 'undefined' && Howler.ctx && Howler.ctx.state === 'suspended') {
+      Howler.ctx.resume().then(() => console.log('[Sound] AudioContext reanudado.'));
+    }
+    return;
+  }
+  
   howlReady    = true;
   howlCritical = new Howl({ src: ['SD_ALERT_33.mp3'], volume: 0.9 });
   howlWarning  = new Howl({
@@ -50,7 +57,13 @@ export function initHowler() {
     volume: 0.45,
     sprite: { warn: [0, 2000] }
   });
-  console.log('[Sinergia REA] Howler.js listo.');
+  
+  // Asegurar que el contexto se reanude tras la creación
+  if (Howler.ctx && Howler.ctx.state === 'suspended') {
+    Howler.ctx.resume();
+  }
+  
+  console.log('[Sinergia REA] Howler.js inicializado y listo.');
 }
 
 /* ── Tono de completado ────────────────────────────────────────── */
