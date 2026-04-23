@@ -197,7 +197,18 @@ async function _initFCM() {
       const title = payload.notification?.title || '🔔 Sinergia REA';
       const body  = payload.notification?.body  || 'Tienes una alerta pendiente';
       if (Notification.permission === 'granted') {
-        new Notification(title, { body, icon: '/icon-192.png', tag: 'sinergia-rea-foreground' });
+        new Notification(title, {
+          body,
+          icon:  'https://cdn-icons-png.flaticon.com/512/2942/2942254.png',
+          badge: 'https://cdn-icons-png.flaticon.com/512/2942/2942254.png',
+          tag:   'sinergia-rea-foreground',
+          renotify: true
+        });
+        // Reproducir sonido de alerta via Howler.js
+        if (typeof Howl !== 'undefined') {
+          const snd = new Howl({ src: ['/SD_ALERT_33.mp3'], volume: 0.8 });
+          snd.play();
+        }
       }
     });
 

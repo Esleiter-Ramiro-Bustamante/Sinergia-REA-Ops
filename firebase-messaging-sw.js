@@ -149,8 +149,8 @@ if (messaging && swState.messagingReady) {
     try {
       self.registration.showNotification(title, {
         body,
-        icon:  '/icon-192.png',
-        badge: '/icon-72.png',
+        icon:  'https://cdn-icons-png.flaticon.com/512/2942/2942254.png',
+        badge: 'https://cdn-icons-png.flaticon.com/512/2942/2942254.png',
         tag:   'sinergia-rea-alert',
         renotify: true,
         data:  payload.data || {},
